@@ -1,15 +1,13 @@
-import time
 import os
+import time
 import uuid
 from typing import List
 
 import requests
-
 from boto3 import client
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from fastapi import UploadFile
-from pydub import AudioSegment
 
 from app.convertFileExtension import convert_to_mp3
 
