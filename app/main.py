@@ -22,9 +22,9 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="Peach API Documentation",
+        title="HumaniCare API Documentation",
         version="1.0",
-        description="Peach API documentation for the application",
+        description="HumaniCare API documentation for the application",
         routes=app.routes,
     )
     # Add the security scheme for Bearer token
