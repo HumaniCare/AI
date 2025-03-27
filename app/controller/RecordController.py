@@ -65,15 +65,15 @@ async def getVoice(request: Request, files: List[UploadFile] = File(...)):
 
 
 @router.post("/save/basic-tts")
-async def save_S3_basic_tts(request: Request, ttsRequestDtoList: FirstTTSRequestDto):
-    token = request.headers.get("Authorization").split(" ")[1]
+async def save_S3_basic_tts(request: Request, firstTTSRequestDtoList: FirstTTSRequestDto):
+    # token = request.headers.get("Authorization").split(" ")[1]
     # text가 어떤형식으로 올지 몰라서 일단 그대로 내보낸다고 가정 (변환시 지피티 사용)
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        ttsRequestDtoList.schedule_id[i]: text_to_speech_file_save_AWS(ttsRequestDtoList.basic_schedule_text[i],
+        firstTTSRequestDtoList.basic_schedule_id[i]: text_to_speech_file_save_AWS(firstTTSRequestDtoList.basic_schedule_text[i],
                                                                        yjg_voice_id)
-        for i in range(len(ttsRequestDtoList.basic_schedule_id))
+        for i in range(len(firstTTSRequestDtoList.basic_schedule_id))
     }
 
     return response
@@ -81,7 +81,7 @@ async def save_S3_basic_tts(request: Request, ttsRequestDtoList: FirstTTSRequest
 
 @router.post("/basic-tts")
 async def speak_schedule_tts(request: Request, basicTTSRequestDto: BasicTTSRequestDto):
-    token = request.headers.get("Authorization").split(" ")[1]
+    # token = request.headers.get("Authorization").split(" ")[1]
     local_file_path = download_from_s3(basicTTSRequestDto.schedule_voice_Url)
     print(f"Downloaded file path: {local_file_path}")
 
@@ -100,9 +100,14 @@ async def speak_schedule_tts(request: Request, extraTTSRequestDto: ExtraTTSReque
     # token = request.headers.get("Authorization").split(" ")[1]
     schedule_text = extraTTSRequestDto.schedule_text
 
-    # local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
+    #진짜 실제로 쓸 코드
+    local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
 
-    local_file_path = os.getcwd()+"/test_audio/test8.mp3" # test
+    # 테스트하면서 AWS에 올려놓으려고 남긴 코드
+    url = text_to_speech_file_save_AWS(schedule_text, yjg_voice_id)
+    local_file_path = download_from_s3(url)
+
+    # local_file_path = os.getcwd()+"/test_audio/test8.mp3" # test
     # 블루투스 헤드셋 또는 기본 스피커로 출력
     os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
     os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경

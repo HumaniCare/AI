@@ -88,7 +88,7 @@ def text_to_speech_file(text: str, voice_id: str) -> str:
             if chunk:
                 f.write(chunk)
     # aws_file_url = upload_to_s3(local_file_path=save_file_path)
-    # os.remove(save_file_path)
+    os.remove(save_file_path)
 
     # delete_voice(voice_id)
 
