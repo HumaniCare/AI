@@ -1,4 +1,5 @@
 import os
+import subprocess
 import time
 from typing import List
 
@@ -6,20 +7,26 @@ import requests
 
 from fastapi import APIRouter, Request, UploadFile, File, Form
 from boto3 import client
-from app import s3Service
+from pydub import AudioSegment
+from pydub.playback import play
 
-# from app.dto.FeedbackRequestDto import FeedbackRequestDto
-from app.elevenLabs import add_voice, text_to_speech_file, get_voice, delete_all_voice
-from app.s3Service import download_from_s3_links
+from app import s3Service
+from app.dto.BasicTTSRequestDto import BasicTTSRequestDto
+from app.dto.FirstTTSRequestDto import FirstTTSRequestDto
+from app.dto.ExtraTTSRequestDto import ExtraTTSRequestDto
+
+from app.elevenLabs import add_voice, text_to_speech_file_save_AWS, get_voice, delete_all_voice, text_to_speech_file
+from app.s3Service import download_from_s3_links, download_from_s3
 
 router = APIRouter(
-    prefix="/api/fastapi/records",
+    prefix="/api/fastapi",
 )
 
 access_key = os.getenv("S3_ACCESS_KEY")
 secret_key = os.getenv("S3_SECRET_KEY")
 bucket_name = os.getenv("S3_BUCKET_NAME")
 url_base = os.getenv("S3_URL")
+yjg_voice_id = os.getenv("YJG_VOICE_ID")
 
 s3_client = client(
     "s3",
@@ -57,13 +64,55 @@ async def getVoice(request: Request, files: List[UploadFile] = File(...)):
     # send_user_voice_file_to_spring(token=token, voice_url=voice_url)
 
 
-# past audio 중, 중복되는 before audio 제거
-# def get_audio_file_paths(feedbackRequestDto: FeedbackRequestDto) -> List[str]:
-#     filtered_past_audio_links = [link for link in feedbackRequestDto.pastAudioLinks if
-#                                  link != feedbackRequestDto.beforeAudioLink]
-#     links = [feedbackRequestDto.beforeAudioLink, feedbackRequestDto.voiceUrl] + filtered_past_audio_links
-#     return download_from_s3_links(links)
-#
+@router.post("/save/basic-tts")
+async def save_S3_basic_tts(request: Request, ttsRequestDtoList: FirstTTSRequestDto):
+    token = request.headers.get("Authorization").split(" ")[1]
+    # text가 어떤형식으로 올지 몰라서 일단 그대로 내보낸다고 가정 (변환시 지피티 사용)
+
+    # TTS 처리 (MP3 파일 생성 후 s3 저장)
+    response = {
+        ttsRequestDtoList.schedule_id[i]: text_to_speech_file_save_AWS(ttsRequestDtoList.basic_schedule_text[i],
+                                                                       yjg_voice_id)
+        for i in range(len(ttsRequestDtoList.basic_schedule_id))
+    }
+
+    return response
+
+
+@router.post("/basic-tts")
+async def speak_schedule_tts(request: Request, basicTTSRequestDto: BasicTTSRequestDto):
+    token = request.headers.get("Authorization").split(" ")[1]
+    local_file_path = download_from_s3(basicTTSRequestDto.schedule_voice_Url)
+    print(f"Downloaded file path: {local_file_path}")
+
+    # 블루투스 헤드셋 또는 기본 스피커로 출력
+    os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
+    os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
+
+    # 로컬 파일을 직접 재생
+    subprocess.run(["mpg321", local_file_path])
+
+    return {"message": "TTS completed and played on Bluetooth headset or speaker"}
+
+
+@router.post("/extra-tts")
+async def speak_schedule_tts(request: Request, extraTTSRequestDto: ExtraTTSRequestDto):
+    # token = request.headers.get("Authorization").split(" ")[1]
+    schedule_text = extraTTSRequestDto.schedule_text
+
+    # local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
+
+    local_file_path = "C:\\Users\\YJG\\Desktop\\2024_2_capstone(1)\\테스트음성들\\test8.mp3" # test
+    # 블루투스 헤드셋 또는 기본 스피커로 출력
+    os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
+    os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
+
+    # 로컬 파일을 직접 재생
+    # subprocess.run(["mpg321", local_file_path])
+    subprocess.run(["ffplay", "-nodisp", "-autoexit", local_file_path],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) # 윈도우용
+    return {"message": "TTS completed and played on Bluetooth headset or speaker"}
+
 
 def send_user_voice_file_to_spring(token: str, voice_url: str):
     headers = {
