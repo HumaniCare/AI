@@ -28,7 +28,6 @@ replay_pid*
 .venv
 env/
 venv/
-ENV/
 env.bak/
 venv.bak/
 
@@ -36,3 +35,5 @@ venv.bak/
 .DS_Store
 
 *.h5
+__pycache__/
+*.pyc
