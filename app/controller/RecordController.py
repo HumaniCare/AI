@@ -102,15 +102,15 @@ async def speak_schedule_tts(request: Request, extraTTSRequestDto: ExtraTTSReque
 
     # local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
 
-    local_file_path = "C:\\Users\\YJG\\Desktop\\2024_2_capstone(1)\\테스트음성들\\test8.mp3" # test
+    local_file_path = os.getcwd()+"/test_audio/test8.mp3" # test
     # 블루투스 헤드셋 또는 기본 스피커로 출력
     os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
     os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
 
     # 로컬 파일을 직접 재생
-    # subprocess.run(["mpg321", local_file_path])
-    subprocess.run(["ffplay", "-nodisp", "-autoexit", local_file_path],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) # 윈도우용
+    subprocess.run(["/usr/bin/mpg321", local_file_path])
+    # subprocess.run(["ffplay", "-nodisp", "-autoexit", local_file_path],
+    #                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) # 윈도우용
     return {"message": "TTS completed and played on Bluetooth headset or speaker"}
 
 
