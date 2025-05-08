@@ -83,7 +83,7 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
     voice_id = schedules.voice_id
 
-    prompt = ChatgptAPI(schedules.schedule_text)
+    prompt = ChatgptAPI(schedules.schedule_text, schedules.alias)
 
     # schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
     schedule_dict = prompt.get_schedule_json()

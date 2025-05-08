@@ -8,8 +8,9 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 class ChatgptAPI:
-    def __init__(self, schedules):
+    def __init__(self, schedules, alias):
         self.schedules = schedules
+        self.alias = alias
 
     def create_schedule_prompt(self):
         system_message = f"""
@@ -19,8 +20,9 @@ class ChatgptAPI:
 
             너의 목표는 두 가지야:
             1. 키워드에 대한 질문 혹은 문장을 한 줄의 텍스트로 만들어.
-                ex) 키워드가 '저녁' 이라면, "엄마~ 하루 잘 보냈어? 저녁도 맛있는거 챙겨먹어! 사랑해~"
-            2. 만든 텍스트는 ?, !, ~ 등이 다양하고 많이 들어갈 수 있어. 감정이 강하게 느껴지게 작성해줘. 
+                ex) 키워드가 '저녁' 이라면, "{self.alias}~ 하루 잘 보냈어? 저녁도 맛있는거 챙겨먹어! 사랑해~"
+            2. 만든 텍스트는 ?, !, ~ 등이 다양하고 많이 들어갈 수 있어. 감정이 강하게 느껴지게 작성해줘.
+            3. 부모님을 지칭하는 별명은 {self.alias} 로 해줘. 
 
             결과는 {"키워드": "문장"} 형태의 JSON 문자열로 반환해줘. 꼭 큰따옴표(")만 사용해.
 
