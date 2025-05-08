@@ -61,7 +61,7 @@ with sd.InputStream(callback=callback, channels=1, samplerate=SAMPLE_RATE, block
 
 # 저장할 디렉토리 설정
 print(os.getcwd())
-save_dir = os.path.join(os.getcwd(), "audio")
+save_dir = os.path.join(os.getcwd(), "first_audio")
 os.makedirs(save_dir, exist_ok=True)  # 디렉토리가 없으면 생성
 
 # 오늘 날짜 문자열
