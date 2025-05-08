@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -8,4 +6,3 @@ class ExtraTTSRequestDto(BaseModel):
     is_basic_schedule: bool
     schedule_text: str
     target_time: str  # "10:00:00" 형식
-

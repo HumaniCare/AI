@@ -1,6 +1,5 @@
-from datetime import datetime
-import subprocess
 import time
+from datetime import datetime
 
 
 def play_at_target_time(target_time: str, local_file_path: str):

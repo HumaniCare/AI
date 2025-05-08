@@ -1,24 +1,16 @@
 import os
-import subprocess
-import time
 from typing import List
 
 import requests
-
-from fastapi import APIRouter, Request, UploadFile, File, Form
 from boto3 import client
-from pydub import AudioSegment
-from pydub.playback import play
+from fastapi import APIRouter, Request, UploadFile, File, Form
 
-from app import s3Service
 from app.dto.ScheduleSpeakRequestDto import ScheduleSpeakRequestDto
 from app.dto.ScheduleTTSRequestDto import ScheduleTTSRequestDto
-from app.gpt import ChatgptAPI
-from app.dto.ExtraTTSRequestDto import ExtraTTSRequestDto
+from app.service.elevenLabs import text_to_speech_file_save_AWS
+from app.service.gpt import ChatgptAPI
+from app.service.s3Service import download_from_s3
 from app.utils import play_file
-
-from app.elevenLabs import add_voice, text_to_speech_file_save_AWS, get_voice, delete_all_voice, text_to_speech_file
-from app.s3Service import download_from_s3_links, download_from_s3
 
 router = APIRouter(
     prefix="/api/fastapi",
@@ -113,7 +105,6 @@ async def speak_schedule(request: Request, scheduleSpeakRequestDto: ScheduleSpea
     play_file.play_at_target_time(scheduleSpeakRequestDto.target_time, local_file_path)
 
     return {"message": "TTS completed and played on speaker"}
-
 
 
 def send_user_voice_file_to_spring(token: str, voice_url: str):

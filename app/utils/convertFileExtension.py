@@ -1,8 +1,8 @@
 import os
+from datetime import datetime
 
 from pydub import AudioSegment
 
-from datetime import datetime
 
 def merge_all_wavs_to_mp3(audio_dir="audio", silence_duration_ms=500):
     wav_files = sorted([
@@ -43,4 +43,6 @@ def convert_to_mp3(file_path):
     os.remove(file_path)
     audio.export(output_path, format="mp3")
     return output_path
+
+
 0

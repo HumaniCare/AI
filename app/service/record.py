@@ -1,15 +1,11 @@
-import pyaudio
-import wave
-
-from app import convertFileExtension
-import sounddevice as sd
-import numpy as np
-import torch
-import time
-from scipy.io.wavfile import write
 import os
+import time
 from datetime import datetime
-import torchaudio
+
+import numpy as np
+import sounddevice as sd
+import torch
+from scipy.io.wavfile import write
 
 # 사일로 VAD 모델 불러오기
 model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', force_reload=False)
@@ -68,7 +64,6 @@ print(os.getcwd())
 save_dir = os.path.join(os.getcwd(), "audio")
 os.makedirs(save_dir, exist_ok=True)  # 디렉토리가 없으면 생성
 
-
 # 오늘 날짜 문자열
 today_str = datetime.now().strftime("%Y%m%d")
 # 파일 이름 설정
@@ -82,8 +77,3 @@ if recorded_audio:
     print(f"녹음된 파일을 {FILENAME}로 저장했습니다.")
 else:
     print("녹음된 음성이 없습니다.")
-
-
-
-
-

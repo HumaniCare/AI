@@ -1,9 +1,10 @@
 import os
 import uuid
-from elevenlabs import ElevenLabs, VoiceSettings
-from dotenv import load_dotenv
 
-from app.s3Service import upload_to_s3
+from dotenv import load_dotenv
+from elevenlabs import ElevenLabs, VoiceSettings
+
+from app.service.s3Service import upload_to_s3
 
 load_dotenv()
 client = ElevenLabs(
