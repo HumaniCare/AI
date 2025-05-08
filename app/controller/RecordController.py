@@ -36,6 +36,18 @@ s3_client = client(
 )
 
 
+async def save_local_file(file: UploadFile) -> str:
+    """하나의 파일을 로컬에 저장하고 경로를 반환합니다."""
+    audio_dir = "./audio"
+    if not os.path.exists(audio_dir):
+        os.makedirs(audio_dir)
+
+    local_file_path = os.path.join(audio_dir, file.filename)
+    with open(local_file_path, "wb") as f:
+        f.write(await file.read())
+    return local_file_path
+
+
 async def save_local_files(files: List[UploadFile]) -> list:
     """업로드된 파일을 로컬에 저장하고 파일 경로를 반환합니다."""
     audio_dir = "./audio"
@@ -52,16 +64,16 @@ async def save_local_files(files: List[UploadFile]) -> list:
 
 # 첫 로그인 시 1분 목소리 녹음 api
 @router.post("/voices")
-async def getVoice(request: Request, files: List[UploadFile] = File(...)):
-    # token = request.headers.get("Authorization").split(" ")[1]
-    local_file_path_list = await save_local_files(files)
-    name = 'yjg'
-    voice_id = add_voice(name=name, local_file_paths=local_file_path_list)
-    print(voice_id)
+async def getVoice(request: Request, user_id: int = Form(...), file: UploadFile = File(...)):
+    token = request.headers.get("Authorization").split(" ")[1]
+    local_file_path = await save_local_file(file)
+    name = str(user_id)
+    # voice_id = add_voice(name=name, local_file_paths=[local_file_path])
+    print(name)
     # voice_url = s3Service.upload_to_s3(local_file_path)
-    # os.remove(local_file_path)
+    os.remove(local_file_path)
 
-    # send_user_voice_file_to_spring(token=token, voice_url=voice_url)
+    send_user_voice_id_to_spring(token=token, voice_id=yjg_voice_id)
 
 
 @router.post("/save/basic-tts")
@@ -71,8 +83,10 @@ async def save_S3_basic_tts(request: Request, firstTTSRequestDtoList: FirstTTSRe
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        firstTTSRequestDtoList.basic_schedule_id[i]: text_to_speech_file_save_AWS(firstTTSRequestDtoList.basic_schedule_text[i],
-                                                                       yjg_voice_id)
+        firstTTSRequestDtoList.basic_schedule_id[i]: text_to_speech_file_save_AWS(
+            firstTTSRequestDtoList.basic_schedule_text[i],
+            yjg_voice_id
+        )
         for i in range(len(firstTTSRequestDtoList.basic_schedule_id))
     }
 
@@ -100,7 +114,7 @@ async def speak_schedule_tts(request: Request, extraTTSRequestDto: ExtraTTSReque
     # token = request.headers.get("Authorization").split(" ")[1]
     schedule_text = extraTTSRequestDto.schedule_text
 
-    #진짜 실제로 쓸 코드
+    # 진짜 실제로 쓸 코드
     local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
 
     # 테스트하면서 AWS에 올려놓으려고 남긴 코드
@@ -125,6 +139,17 @@ def send_user_voice_file_to_spring(token: str, voice_url: str):
     }
     data = {
         "voiceUrl": voice_url
+    }
+    requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
+    # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
+
+
+def send_user_voice_id_to_spring(token: str, voice_id: str):
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    data = {
+        "voiceId": voice_id
     }
     requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
