@@ -11,8 +11,9 @@ from pydub import AudioSegment
 from pydub.playback import play
 
 from app import s3Service
-from app.dto.BasicTTSRequestDto import BasicTTSRequestDto
-from app.dto.FirstTTSRequestDto import FirstTTSRequestDto
+from app.dto.ScheduleSpeakRequestDto import BasicTTSRequestDto
+from app.dto.ScheduleTTSRequestDto import ScheduleTTSRequestDto
+from app.gpt import ChatgptAPI
 from app.dto.ExtraTTSRequestDto import ExtraTTSRequestDto
 
 from app.elevenLabs import add_voice, text_to_speech_file_save_AWS, get_voice, delete_all_voice, text_to_speech_file
@@ -62,7 +63,7 @@ async def save_local_files(files: List[UploadFile]) -> list:
     return local_file_path_list
 
 
-# 첫 로그인 시 1분 목소리 녹음 api
+# 첫 로그인 시 목소리 녹음 api
 @router.post("/voices")
 async def getVoice(request: Request, user_id: int = Form(...), file: UploadFile = File(...)):
     token = request.headers.get("Authorization").split(" ")[1]
@@ -76,25 +77,33 @@ async def getVoice(request: Request, user_id: int = Form(...), file: UploadFile 
     send_user_voice_id_to_spring(token=token, voice_id=yjg_voice_id)
 
 
-@router.post("/save/basic-tts")
-async def save_S3_basic_tts(request: Request, firstTTSRequestDtoList: FirstTTSRequestDto):
+@router.post("/schedules")
+async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
-    # text가 어떤형식으로 올지 몰라서 일단 그대로 내보낸다고 가정 (변환시 지피티 사용)
+    voice_id = schedules.voice_id
+
+    prompt = ChatgptAPI(schedules.schedule_text)
+
+    # schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
+    schedule_dict = prompt.get_schedule_json()
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        firstTTSRequestDtoList.basic_schedule_id[i]: text_to_speech_file_save_AWS(
-            firstTTSRequestDtoList.basic_schedule_text[i],
-            yjg_voice_id
-        )
-        for i in range(len(firstTTSRequestDtoList.basic_schedule_id))
+        schedules.schedule_id[i]: {
+            "keyword": schedules.schedule_text[i],  # 키워드 직접 저장
+            "text": schedule_dict.get(schedules.schedule_text[i], ""),  # 문장은 GPT 결과에서 매핑
+            "url": text_to_speech_file_save_AWS(
+                schedule_dict.get(schedules.schedule_text[i], ""),
+                yjg_voice_id
+            )
+        }
+        for i in range(len(schedules.schedule_id))
     }
-
     return response
 
 
-@router.post("/basic-tts")
-async def speak_schedule_tts(request: Request, basicTTSRequestDto: BasicTTSRequestDto):
+@router.post("/schedules-speak")
+async def speak_schedule(request: Request, basicTTSRequestDto: BasicTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
     local_file_path = download_from_s3(basicTTSRequestDto.schedule_voice_Url)
     print(f"Downloaded file path: {local_file_path}")
