@@ -11,7 +11,6 @@ from scipy.io.wavfile import write
 model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', force_reload=False)
 (get_speech_timestamps, save_audio, read_audio, VADIterator, collect_chunks) = utils
 
-SAMPLE_RATE = 16000
 FRAME_SIZE = 512
 SILENCE_LIMIT = 2.0  # 2초 이상 침묵하면 종료
 FILENAME = "output.wav"  # 녹음된 오디오 파일 이름

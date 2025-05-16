@@ -38,3 +38,4 @@ venv.bak/
 __pycache__/
 *.pyc
 audio/
+emotion_diary/
