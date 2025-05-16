@@ -3,25 +3,30 @@ import wave
 import numpy as np
 import os
 from datetime import datetime
+from s3Service import upload_to_s3
+from elevenLabs import text_to_speech_file
+from faster_whisper import WhisperModel
+model = WhisperModel("tiny", device="cpu", compute_type="int8")
+import subprocess
 
 MIC_INDEX = 1  # USB 마이크 인덱스
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 CHUNK = 4096
-SILENCE_LIMIT = 5  # 침묵 3초 이상이면 종료
+SILENCE_LIMIT = 10 # 침묵 3초 이상이면 종료
 
 # 오늘 날짜 문자열
 today_str = datetime.now().strftime("%Y%m%d")
-WAVE_OUTPUT_FILENAME = "/home/team4/Desktop/capstone/AI/app/emotion_diary/" + today_str + "_output.mp3"
+WAVE_OUTPUT_FILENAME = "/home/team4/Desktop/capstone/AI/app/emotion_diary/" + today_str + "_"
 
 def is_silent(data, threshold=100):
     audio_data = np.frombuffer(data, dtype=np.int16)
     rms = np.sqrt(np.mean(audio_data**2))
     print(f"RMS: {rms}")
     return rms < threshold
-
-def emotion_record():
+model = WhisperModel("tiny", device="cpu", compute_type="int8")
+def emotion_record(index):
     p = pyaudio.PyAudio()
     stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
                     input_device_index=MIC_INDEX, frames_per_buffer=CHUNK)
@@ -54,7 +59,7 @@ def emotion_record():
     stream.close()
     p.terminate()
 
-    wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
+    wf = wave.open(WAVE_OUTPUT_FILENAME+index+".wav", 'wb')
     wf.setnchannels(CHANNELS)
     wf.setsampwidth(p.get_sample_size(FORMAT))
     wf.setframerate(RATE)
@@ -87,9 +92,27 @@ def emotion_record():
     wf.close()
 
     print(f"파일 저장 완료: {WAVE_OUTPUT_FILENAME}")
+    return WAVE_OUTPUT_FILENAME
+
+    # s3_path = upload_to_s3(WAVE_OUTPUT_FILENAME)
+
+def start(alias):
+    text = alias + "~~ 오늘 좋은 하루 보냈나~~?? 어떻게 지냈어!!"
+    save_file_path = text_to_speech_file(text)
+    subprocess.run(["mpg321", save_file_path])
+
+    while(True):
+        emotion_record()
+        segments, _ = model.transcribe(save_file_path, beam_size=1, language="ko")
+        user_text = " ".join([seg.text for seg in segments]).strip()
+
+        subprocess.run(["mpg321", local_file_path])
+        
+
+    
 
 
-
+ 
 # import pyaudio
 
 # p = pyaudio.PyAudio()

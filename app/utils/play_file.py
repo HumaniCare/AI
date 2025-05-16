@@ -25,7 +25,7 @@ def play_at_target_time(target_time: str, local_file_path: str):
     subprocess.run(["mpg321", local_file_path])
 
     # window 테스트 용
-    from playsound import playsound
-    from pathlib import Path
-    safe_path = Path(local_file_path).resolve().as_posix()
-    playsound(safe_path)
+    # from playsound import playsound
+    # from pathlib import Path
+    # safe_path = Path(local_file_path).resolve().as_posix()
+    # playsound(safe_path)
