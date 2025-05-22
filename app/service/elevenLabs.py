@@ -10,6 +10,7 @@ load_dotenv()
 client = ElevenLabs(
     api_key=os.getenv("ELEVENLABS_KEY"),
 )
+yjg_voice_id = os.getenv("YJG_VOICE_ID")
 
 
 def get_voice():
@@ -42,7 +43,7 @@ def add_voice(name: str, local_file_paths: list):
     return response.voice_id
 
 
-def text_to_speech_file_save_AWS(text: str, voice_id: str) -> str:
+def text_to_speech_file_save_AWS(text: str, voice_id=yjg_voice_id) -> str:
     response = client.text_to_speech.convert(
         voice_id=voice_id,
         output_format="mp3_22050_32",
@@ -69,7 +70,7 @@ def text_to_speech_file_save_AWS(text: str, voice_id: str) -> str:
     return aws_file_url
 
 
-def text_to_speech_file(text: str, voice_id: str) -> str:
+def text_to_speech_file(text: str, voice_id=yjg_voice_id) -> str:
     response = client.text_to_speech.convert(
         voice_id=voice_id,
         # output_format="mp3_22050_32",
@@ -89,7 +90,7 @@ def text_to_speech_file(text: str, voice_id: str) -> str:
             if chunk:
                 f.write(chunk)
     # aws_file_url = upload_to_s3(local_file_path=save_file_path)
-    os.remove(save_file_path)
+    # os.remove(save_file_path)
 
     # delete_voice(voice_id)
 
