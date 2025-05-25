@@ -1,9 +1,10 @@
 import os
 import uuid
-from elevenlabs import ElevenLabs, VoiceSettings
-from dotenv import load_dotenv
 
-from app.s3Service import upload_to_s3
+from dotenv import load_dotenv
+from elevenlabs import ElevenLabs, VoiceSettings
+
+from app.service.s3Service import upload_to_s3
 
 load_dotenv()
 client = ElevenLabs(
@@ -46,13 +47,13 @@ def text_to_speech_file_save_AWS(text: str, voice_id: str) -> str:
         voice_id=voice_id,
         output_format="mp3_22050_32",
         text=text,
-        model_id="eleven_turbo_v2_5",
-        voice_settings=VoiceSettings(
-            stability=0.3,
-            similarity_boost=1.0,
-            style=0.0,
-            use_speaker_boost=True,
-        ),
+        model_id="eleven_multilingual_v2",
+        # voice_settings=VoiceSettings(
+        #     stability=0.3,
+        #     similarity_boost=1.0,
+        #     style=0.0,
+        #     use_speaker_boost=True,
+        # ),
     )
 
     save_file_path = f"{uuid.uuid4()}.mp3"

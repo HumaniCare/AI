@@ -1,10 +1,9 @@
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.controller.RecordController import router
-
-from fastapi import FastAPI, Depends, HTTPException, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.openapi.utils import get_openapi
 
 app = FastAPI()
 

@@ -9,7 +9,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from fastapi import UploadFile
 
-from app.convertFileExtension import convert_to_mp3
+from app.utils.convertFileExtension import convert_to_mp3
 
 load_dotenv()
 
@@ -116,4 +116,3 @@ def download_from_s3_model(file_s3_url: str) -> str:
         print(f"HTTP error occurred: {e}")
     except Exception as e:
         print(f"An error occurred: {e}")
-

@@ -96,7 +96,7 @@ async def speak_schedule_tts(request: Request, basicTTSRequestDto: BasicTTSReque
 
 
 @router.post("/extra-tts")
-async def speak_schedule_tts(request: Request, extraTTSRequestDto: ExtraTTSRequestDto):
+async def speak_schedule_tts(request: Rlocalhostquest, extraTTSRequestDto: ExtraTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
     schedule_text = extraTTSRequestDto.schedule_text
 
