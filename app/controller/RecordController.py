@@ -65,15 +65,15 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
     voice_id = yjg_voice_id
 
-    prompt = ChatgptAPI(schedules.schedule_text, "엄마")
+    #prompt = ChatgptAPI(schedules.schedule_text, "엄마")
 
     # schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
-    schedule_dict = prompt.get_schedule_json()
+    #schedule_dict = prompt.get_schedule_json()
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
         schedules.schedule_id[i]: text_to_speech_file_save_AWS(
-            schedule_dict.get(schedules.schedule_text[i], ""),
+            "안녕하세요, 저는 중앙대학교 캡스톤 2를 하고 있는 바보입니다.",
             yjg_voice_id
         )
         for i in range(len(schedules.schedule_id))
