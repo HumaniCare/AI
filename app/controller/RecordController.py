@@ -126,7 +126,7 @@ def send_user_voice_file_to_spring(token: str, voice_url: str):
     data = {
         "voiceUrl": voice_url
     }
-    requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
+    requests.post("http://springboot:8080/api/spring/records/voices", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
 
@@ -138,7 +138,7 @@ def send_user_speech_file_to_spring(token: str, before_audio_link: str, answerId
         "beforeAudioLink": before_audio_link,
         "answerId": answerId
     }
-    requests.post("http://localhost:8080/api/spring/records/speeches", headers=headers, json=data)
+    requests.post("http://springboot:8080/api/spring/records/speeches", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/records/speeches", headers=headers, json=data)
 
 
@@ -146,7 +146,7 @@ def receive_self_feedback(token: str) -> str:
     headers = {
         "Authorization": f"Bearer {token}"
     }
-    response = requests.get("http://localhost:8080/api/spring/self-feedbacks/latest-feedbacks", headers=headers)
+    response = requests.get("http://springboot:8080/api/spring/self-feedbacks/latest-feedbacks", headers=headers)
     # response = requests.get("https://peachmentor.com/api/spring/self-feedbacks/latest-feedbacks", headers=headers)
 
     feedback_data = response.json().get('result', {})
@@ -166,7 +166,7 @@ def send_statistics_to_spring(token: str, gantourCount: int, silentTime: float, 
         "silentTime": silentTime,
         "answerId": answerId
     }
-    requests.post("http://localhost:8080/api/spring/statistics", headers=headers, json=data)
+    requests.post("http://springboot:8080/api/spring/statistics", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/statistics", headers=headers, json=data)
 
 # # 질문 답변에 대한 insight 제공 api
