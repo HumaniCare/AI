@@ -72,10 +72,11 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        schedules.schedule_id[i]: text_to_speech_file_save_AWS(
-            "안녕하세요, 저는 중앙대학교 캡스톤 2를 하고 있는 바보입니다.",
-            yjg_voice_id
-        )
+        # schedules.schedule_id[i]: text_to_speech_file_save_AWS(
+        #     schedule_dict.get(schedules.schedule_text[i], ""),
+        #     yjg_voice_id
+        # )
+        schedules.schedule_id[i]: str(schedules.schedule_id[i])
         for i in range(len(schedules.schedule_id))
     }
     return response
