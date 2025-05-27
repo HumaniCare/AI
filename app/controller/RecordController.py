@@ -126,12 +126,10 @@ def send_user_voice_file_to_spring(token: str, voice_url: str):
         "Content-Type": "text/plain"
     }
 
-    json_string = json.dumps(voice_url)  # 문자열을 JSON 문자열로 인코딩 → ex) "https://..." 형태
-
     requests.post(
         "http://springboot:8080/api/spring/records/voices",
         headers=headers,
-        data=json_string  # 주의: 'data='를 써야 함
+        data=voice_url  # 주의: 'data='를 써야 함
     )
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
