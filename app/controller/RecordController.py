@@ -48,14 +48,12 @@ async def save_local_files(files: List[UploadFile]) -> list:
 
 # 첫 로그인 시 목소리 녹음 api
 @router.post("/voices")
-async def getVoice(request: Request, user_id: int = Form(...), file: UploadFile = File(...)):
+async def getVoice(request: Request, file: UploadFile = File(...)):
     token = request.headers.get("Authorization").split(" ")[1]
-    local_file_path = await save_local_file(file)
-    name = str(user_id)
+    # local_file_path = await save_local_file(file)
     # voice_id = add_voice(name=name, local_file_paths=[local_file_path])
-    print(name)
     # voice_url = s3Service.upload_to_s3(local_file_path)
-    os.remove(local_file_path)
+    # os.remove(local_file_path)
 
     send_user_voice_file_to_spring(token=token, voice_url=yjg_voice_id)
 
