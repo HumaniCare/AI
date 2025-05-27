@@ -123,7 +123,7 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
 def send_user_voice_file_to_spring(token: str, voice_url: str):
     headers = {
         "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
+        "Content-Type": "text/plain"
     }
 
     json_string = json.dumps(voice_url)  # 문자열을 JSON 문자열로 인코딩 → ex) "https://..." 형태
