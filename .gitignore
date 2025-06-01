@@ -34,7 +34,7 @@ venv.bak/
 *.idea
 .DS_Store
 
-*.h5
+
 __pycache__/
 *.pyc
 audio/
