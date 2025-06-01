@@ -1,4 +1,6 @@
+import json
 import os
+import subprocess
 from typing import List
 
 import requests
@@ -7,9 +9,9 @@ from fastapi import APIRouter, Request, UploadFile, File, Form
 
 from app.dto.ScheduleSpeakRequestDto import ScheduleSpeakRequestDto
 from app.dto.ScheduleTTSRequestDto import ScheduleTTSRequestDto
-from app.service.elevenLabs import text_to_speech_file_save_AWS
+from app.service.elevenLabs import text_to_speech_file_save_AWS, text_to_speech_file
 from app.service.gpt import ChatgptAPI
-from app.service.s3Service import download_from_s3
+from app.service.s3Service import download_from_s3, save_local_file
 from app.utils import play_file
 
 router = APIRouter(
@@ -30,18 +32,6 @@ s3_client = client(
 )
 
 
-async def save_local_file(file: UploadFile) -> str:
-    """하나의 파일을 로컬에 저장하고 경로를 반환합니다."""
-    audio_dir = "./audio"
-    if not os.path.exists(audio_dir):
-        os.makedirs(audio_dir)
-
-    local_file_path = os.path.join(audio_dir, file.filename)
-    with open(local_file_path, "wb") as f:
-        f.write(await file.read())
-    return local_file_path
-
-
 async def save_local_files(files: List[UploadFile]) -> list:
     """업로드된 파일을 로컬에 저장하고 파일 경로를 반환합니다."""
     audio_dir = "./audio"
@@ -58,64 +48,91 @@ async def save_local_files(files: List[UploadFile]) -> list:
 
 # 첫 로그인 시 목소리 녹음 api
 @router.post("/voices")
-async def getVoice(request: Request, user_id: int = Form(...), file: UploadFile = File(...)):
+async def getVoice(request: Request, file: UploadFile = File(...)):
     token = request.headers.get("Authorization").split(" ")[1]
-    local_file_path = await save_local_file(file)
-    name = str(user_id)
+    # local_file_path = await save_local_file(file)
     # voice_id = add_voice(name=name, local_file_paths=[local_file_path])
-    print(name)
     # voice_url = s3Service.upload_to_s3(local_file_path)
-    os.remove(local_file_path)
+    # os.remove(local_file_path)
 
-    send_user_voice_id_to_spring(token=token, voice_id=yjg_voice_id)
+    send_user_voice_file_to_spring(token=token, voice_url=yjg_voice_id)
 
-
+#만약 voice_id와 요구하는 분야가 오면 맞춰서 return
 @router.post("/schedules")
 async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
-    voice_id = schedules.voice_id
+    voice_id = yjg_voice_id
 
-    prompt = ChatgptAPI(schedules.schedule_text, schedules.alias)
+    #prompt = ChatgptAPI(schedules.schedule_text, "엄마")
 
     # schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
-    schedule_dict = prompt.get_schedule_json()
+    #schedule_dict = prompt.get_schedule_json()
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        schedules.schedule_id[i]: {
-            "keyword": schedules.schedule_text[i],  # 키워드 직접 저장
-            "text": schedule_dict.get(schedules.schedule_text[i], ""),  # 문장은 GPT 결과에서 매핑
-            "url": text_to_speech_file_save_AWS(
-                schedule_dict.get(schedules.schedule_text[i], ""),
-                yjg_voice_id
-            )
-        }
+        # schedules.schedule_id[i]: text_to_speech_file_save_AWS(
+        #     schedule_dict.get(schedules.schedule_text[i], ""),
+        #     yjg_voice_id
+        # )
+        schedules.schedule_id[i]: str(schedules.schedule_id[i])
         for i in range(len(schedules.schedule_id))
     }
     return response
 
 
-@router.post("/schedules-speak")
-async def speak_schedule(request: Request, scheduleSpeakRequestDto: ScheduleSpeakRequestDto):
-    # token = request.headers.get("Authorization").split(" ")[1]
-    local_file_path = download_from_s3(scheduleSpeakRequestDto.schedule_voice_Url)
-    print(f"Downloaded file path: {local_file_path}")
+# @router.post("/basic-tts")
+# async def speak_schedule_tts(request: Request, basicTTSRequestDto: BasicTTSRequestDto):
+#     # token = request.headers.get("Authorization").split(" ")[1]
+#     local_file_path = download_from_s3(basicTTSRequestDto.schedule_voice_Url)
+#     print(f"Downloaded file path: {local_file_path}")
+#
+#     # 블루투스 헤드셋 또는 기본 스피커로 출력
+#     os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
+#     os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
+#
+#     # 로컬 파일을 직접 재생
+#     subprocess.run(["mpg321", local_file_path])
+#
+#     return {"message": "TTS completed and played on Bluetooth headset or speaker"}
 
-    # target_time에 맞춰서 TTS 파일 재생
-    play_file.play_at_target_time(scheduleSpeakRequestDto.target_time, local_file_path)
 
-    return {"message": "TTS completed and played on speaker"}
-
+# @router.post("/extra-tts")
+# async def speak_schedule_tts(request: Rlocalhostquest, extraTTSRequestDto: ExtraTTSRequestDto):
+#     # token = request.headers.get("Authorization").split(" ")[1]
+#     schedule_text = extraTTSRequestDto.schedule_text
+#
+#     #진짜 실제로 쓸 코드
+#     local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
+#
+#     # 테스트하면서 AWS에 올려놓으려고 남긴 코드
+#     url = text_to_speech_file_save_AWS(schedule_text, yjg_voice_id)
+#     local_file_path = download_from_s3(url)
+#
+#     # local_file_path = os.getcwd()+"/test_audio/test8.mp3" # test
+#     # 블루투스 헤드셋 또는 기본 스피커로 출력
+#     os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
+#     os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
+#
+#     # 로컬 파일을 직접 재생
+#     subprocess.run(["/usr/bin/mpg321", local_file_path])
+#     # subprocess.run(["ffplay", "-nodisp", "-autoexit", local_file_path],
+#     #                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) # 윈도우용
+#     return {"message": "TTS completed and played on Bluetooth headset or speaker"}
+#
 
 def send_user_voice_file_to_spring(token: str, voice_url: str):
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "text/plain"
     }
-    data = {
-        "voiceUrl": voice_url
-    }
-    requests.post("http://springboot:8080/api/spring/records/voices", headers=headers, json=data)
+    # requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
+
+    requests.post(
+        "http://springboot:8080/api/spring/records/voices",
+        headers=headers,
+        data=voice_url  # 주의: 'data='를 써야 함
+    )
 
 
 def send_user_voice_id_to_spring(token: str, voice_id: str):
@@ -125,7 +142,7 @@ def send_user_voice_id_to_spring(token: str, voice_id: str):
     data = {
         "voiceId": voice_id
     }
-    requests.post("http://springboot:8080/api/spring/records/voices", headers=headers, json=data)
+    requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
 
