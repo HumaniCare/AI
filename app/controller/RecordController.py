@@ -125,12 +125,24 @@ def send_user_voice_file_to_spring(token: str, voice_url: str):
         "Authorization": f"Bearer {token}",
         "Content-Type": "text/plain"
     }
+    # requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
+    # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
     requests.post(
         "http://springboot:8080/api/spring/records/voices",
         headers=headers,
         data=voice_url  # 주의: 'data='를 써야 함
     )
+
+
+def send_user_voice_id_to_spring(token: str, voice_id: str):
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    data = {
+        "voiceId": voice_id
+    }
+    requests.post("http://localhost:8080/api/spring/records/voices", headers=headers, json=data)
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
 

@@ -39,3 +39,4 @@ __pycache__/
 *.pyc
 audio/
 emotion_diary/
+pyvenv.cfg
