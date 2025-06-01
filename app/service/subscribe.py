@@ -2,7 +2,7 @@ import os
 import redis.asyncio as redis
 import json
 import subprocess
-from AI.app.service.s3Service import download_from_s3
+from app.service.s3Service import download_from_s3
 REDIS_HOST = os.getenv("REDIS_HOST", "15.165.21.152")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6380"))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "babyy1023@")

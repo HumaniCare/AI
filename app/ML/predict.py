@@ -2,9 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 from sentence_transformers import SentenceTransformer
+import glob
+import os
+
+from app.ML.audio_extractor_utils import get_features
+from app.ML.loss import boundary_enhanced_focal_loss
+from app.ML.speech_to_text import speech_to_text
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 
-def predict(sample_path):
+BASE_DIR_resp = "/home/team4/Desktop/capstone/AI/app/emotion_diary"
+BASE_DIR_win = "C:/Users/YJG/Desktop/2025_1_capstone_2/AI/app/emotion_diary"
+emotion_labels = ['angry', 'sadness', 'happiness', 'fear', 'disgust', 'surprise', 'neutral']
+model_path_resp = "/home/team4/Desktop/capstone/AI/app/ML/ko-sbert_multimodal_0501_3_resnet_augment_h.h5"
+model_path_win = "C:/Users/YJG/Desktop/2025_1_capstone_2/AI/app/ML/ko-sbert_multimodal_0501_3_resnet_augment_h.h5"
+
+
+def predict():
+    BASE_DIR = BASE_DIR_win
+    model_path = model_path_win
     # (가정) 미리 정의된 함수/변수
     # get_features(path): (486,) 벡터 반환
     # speech_to_text(path): STT → 문자열 반환
@@ -13,13 +30,14 @@ def predict(sample_path):
     # model_path, sample_path: 경로 문자열
 
     # 1) WAV 파일 리스트
-    sample_wav_list = [
-        sample_path + "/jg_sadness_1.wav",
-        sample_path + "/jg_sadness_2.wav",
-        sample_path + "/jg_sadness_3.wav",
-        sample_path + "/jg_sadness_4.wav",
-        sample_path + "/jg_sadness_5.wav"
-    ]
+    # sample_wav_list = [
+    #     sample_path + "/jg_sadness_1.wav",
+    #     sample_path + "/jg_sadness_2.wav",
+    #     sample_path + "/jg_sadness_3.wav",
+    #     sample_path + "/jg_sadness_4.wav",
+    #     sample_path + "/jg_sadness_5.wav"
+    # ]
+    sample_wav_list = glob.glob(os.path.join(BASE_DIR, "**", "*.wav"), recursive=True)
 
     # 2) 오디오 특징 평균 풀링
     all_feats = np.stack([get_features(p) for p in sample_wav_list], axis=0)  # (5,486)
@@ -71,3 +89,7 @@ def predict(sample_path):
     # 이미지 파일로 저장
     plt.savefig('emotion_distribution.png', dpi=300, bbox_inches='tight')
     plt.show()
+
+
+if __name__ == "__main__":
+    predict()

@@ -1,6 +1,6 @@
 import speech_recognition as sr
 
-sample_wav_path = sample_path + "/sh_sadness_2.wav"
+# sample_wav_path = sample_path + "/sh_sadness_2.wav"
 
 
 # STT 변환 함수
@@ -20,7 +20,7 @@ def speech_to_text(audio_path):
     except sr.RequestError:
         return "STT 요청 실패"
 
-
-# MP3에서 변환한 WAV 파일 입력
-sample_text = speech_to_text(sample_wav_path)
-print("변환된 텍스트:", sample_text)
+#
+# # MP3에서 변환한 WAV 파일 입력
+# sample_text = speech_to_text(sample_wav_path)
+# print("변환된 텍스트:", sample_text)
