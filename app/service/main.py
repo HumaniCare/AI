@@ -6,7 +6,9 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
 
-from app.controller.RecordController import router
+# from app.controller.RecordController import router
+
+from app.controller.ModelController import router
 from app.service.subscribe import subscribe_schedule
 
 @asynccontextmanager

@@ -62,6 +62,7 @@
 #     # 종료 함수는 비활성화 (라이브러리 오류 방지)
 #     # dhtDevice.exit()
 
+import uvicorn
 
 # ───────────────────────────────
 # 메인 함수
@@ -69,8 +70,8 @@
 if __name__ == "__main__":
     uvicorn.run(
         app="app.service.main:app",
-        host="localhost",
-        # host="0.0.0.0",
+        # host="localhost",
+        host="0.0.0.0",
         port=8000,
     )
     # detect_motion()  # PIR 센서 테스트 시 주석 해제

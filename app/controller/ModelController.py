@@ -1,5 +1,5 @@
 import numpy as np
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, APIRouter
 from typing import List
 from tensorflow.keras.models import load_model
 from sentence_transformers import SentenceTransformer
@@ -11,9 +11,13 @@ from app.ML.speech_to_text import speech_to_text
 
 import os
 
+router = APIRouter(
+    prefix="/api/fastapi",
+)
+
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
-app = FastAPI()
+# app = FastAPI()
 
 BASE_DIR_win = "C:/Users/YJG/Desktop/2025_1_capstone_2/AI/app/emotion_diary"
 model_path_win = "C:/Users/YJG/Desktop/2025_1_capstone_2/AI/app/ML/ko-sbert_multimodal_0501_3_resnet_augment_h.h5"
@@ -23,7 +27,7 @@ embedding_model = SentenceTransformer('jhgan/ko-sbert-multitask')
 model = load_model(model_path_win, custom_objects={'boundary_enhanced_focal_loss': boundary_enhanced_focal_loss})
 
 
-@app.post("/predict")
+@router.post("/predict")
 async def predict(files: List[UploadFile] = File(...)):
     # 1) 임시 파일 저장 or 메모리 내 처리
     wav_data_list = []
