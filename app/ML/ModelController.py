@@ -1,10 +1,11 @@
 import numpy as np
 from dotenv import load_dotenv
-from fastapi import FastAPI, UploadFile, File, APIRouter, requests
+from fastapi import Request, UploadFile, File, APIRouter
 from typing import List
 from tensorflow.keras.models import load_model
 from sentence_transformers import SentenceTransformer
 import io
+import requests
 
 from app.ML.audio_extractor_utils import get_features
 from app.ML.loss import boundary_enhanced_focal_loss
@@ -35,7 +36,8 @@ model = load_model(model_path_win, custom_objects={'boundary_enhanced_focal_loss
 
 
 @router.post("/predict")
-async def predict(files: List[UploadFile] = File(...)):
+async def predict(request: Request, files: List[UploadFile] = File(...)):
+    # token = request.headers.get("Authorization").split(" ")[1]
     print(files)
     # 1) 임시 파일 저장 or 메모리 내 처리
     wav_data_list = []
@@ -92,19 +94,23 @@ async def predict(files: List[UploadFile] = File(...)):
 
     print(s3_path)
 
-    send_emotion_report_to_spring(s3_path, report_text)
+    # send_emotion_report_to_spring(s3_path, report_text)
 
-    return "good"
+    data = {
+        "imageUrl": s3_path,
+        "report_text": report_text
+    }
+    return data
 
 
-def send_emotion_report_to_spring(token: str, image_url: str, analysis_text):
+def send_emotion_report_to_spring(image_url: str, analysis_text):
     headers = {
-        "Authorization": f"Bearer {token}",
+        # "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     data = {
         "imageUrl": image_url,
-        "someOtherString": analysis_text
+        "report_text": analysis_text
     }
     requests.post(
         "http://springboot:8080/api/spring/report",
