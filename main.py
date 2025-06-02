@@ -6,6 +6,7 @@ from datetime import datetime
 # PIR 센서 관련
 # ───────────────────────────────
 PIR_PIN = 17  # GPIO17
+PIR_PIN_1 = 4
 
 def detect_motion():
     GPIO.setmode(GPIO.BCM)
@@ -37,6 +38,10 @@ import adafruit_dht
 import board
 
 def read_dht11():
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(PIR_PIN_1, GPIO.IN)
+
     print("🌡️ DHT11 센서 측정 시작...")
     dhtDevice = adafruit_dht.DHT11(board.D4)  # GPIO4 (멀티보드 IO4)
 
