@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-
+import io
 from pydub import AudioSegment
 
 
@@ -45,4 +45,13 @@ def convert_to_mp3(file_path):
     return output_path
 
 
-0
+def convert_to_wav(raw_bytes: bytes, file_ext: str) -> bytes:
+    # raw_bytes를 파일처럼 다루기 위해 BytesIO로 감싼다.
+    bytes_io = io.BytesIO(raw_bytes)
+    audio = AudioSegment.from_file(bytes_io, format=file_ext)
+    # 원하는 포맷(16kHz mono PCM)으로 변환
+    audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+    # WAV 바이트로 내보내기
+    out_io = io.BytesIO()
+    audio.export(out_io, format="wav")
+    return out_io.getvalue()

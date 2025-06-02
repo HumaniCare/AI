@@ -11,6 +11,8 @@ from app.ML.speech_to_text import speech_to_text
 
 import os
 
+from app.utils.convertFileExtension import convert_to_wav
+
 router = APIRouter(
     prefix="/api/fastapi",
 )
@@ -19,8 +21,8 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 # app = FastAPI()
 
-BASE_DIR_win = "C:/Users/YJG/Desktop/2025_1_capstone_2/AI/app/emotion_diary"
-model_path_win = "C:/Users/YJG/Desktop/2025_1_capstone_2/AI/app/ML/ko-sbert_multimodal_0501_3_resnet_augment_h.h5"
+BASE_DIR_win = os.getcwd() + "/app/emotion_diary"
+model_path_win = os.getcwd() + "/app/ML/ko-sbert_multimodal_0501_3_resnet_augment_h.h5"
 emotion_labels = ['angry', 'sadness', 'happiness', 'fear', 'disgust', 'surprise', 'neutral']
 
 embedding_model = SentenceTransformer('jhgan/ko-sbert-multitask')
@@ -29,11 +31,18 @@ model = load_model(model_path_win, custom_objects={'boundary_enhanced_focal_loss
 
 @router.post("/predict")
 async def predict(files: List[UploadFile] = File(...)):
+    print(files)
     # 1) 임시 파일 저장 or 메모리 내 처리
     wav_data_list = []
     for file in files:
-        contents = await file.read()
-        wav_data_list.append(contents)
+        raw = await file.read()
+        ext = file.filename.split('.')[-1]  # 'm4a', 'mp3' 등
+        if ext != "wav":
+            wav_bytes = convert_to_wav(raw, ext)  # BytesIO 변환
+            wav_data_list.append(wav_bytes)
+        else:
+            wav_data_list.append(raw)
+
 
     # 2) 오디오 특징 추출
     all_feats = []

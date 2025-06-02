@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 
 # from app.controller.RecordController import router
 
-from app.controller.ModelController import router
+from app.ML.ModelController import router
 from app.service.subscribe import subscribe_schedule
 
 @asynccontextmanager
