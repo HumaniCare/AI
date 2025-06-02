@@ -38,5 +38,6 @@ venv.bak/
 __pycache__/
 *.pyc
 audio/
-emotion_diary/
+#emotion_diary/
+emotion_png/
 pyvenv.cfg

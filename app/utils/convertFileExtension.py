@@ -1,7 +1,10 @@
-import os
-from datetime import datetime
 import io
+import os
+import tempfile
+from datetime import datetime
+
 from pydub import AudioSegment
+from pydub.exceptions import CouldntDecodeError
 
 
 def merge_all_wavs_to_mp3(audio_dir="audio", silence_duration_ms=500):
@@ -45,13 +48,51 @@ def convert_to_mp3(file_path):
     return output_path
 
 
-def convert_to_wav(raw_bytes: bytes, file_ext: str) -> bytes:
-    # raw_bytes를 파일처럼 다루기 위해 BytesIO로 감싼다.
-    bytes_io = io.BytesIO(raw_bytes)
-    audio = AudioSegment.from_file(bytes_io, format=file_ext)
-    # 원하는 포맷(16kHz mono PCM)으로 변환
+def convert_to_wav(raw_bytes: bytes, ext: str) -> bytes:
+    ext = ext.lower()
+    # 이미 WAV라면 바로 반환
+    if ext == "wav":
+        return raw_bytes
+
+    # 임시 입력 파일 생성
+    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}") as fin:
+        fin.write(raw_bytes)
+        fin.flush()
+        fin_path = fin.name
+
+    try:
+        # 1) format 인자 없이 자동 감지 시도
+        audio = AudioSegment.from_file(fin_path)
+    except CouldntDecodeError:
+        try:
+            # 2) 자동 감지도 실패하면, 프로브 크기 늘려서 재시도
+            audio = AudioSegment.from_file(
+                fin_path,
+                parameters=["-probesize", "50M", "-analyzeduration", "100M"]
+            )
+        except CouldntDecodeError as e:
+            os.unlink(fin_path)
+            raise RuntimeError(f"FFmpeg 디코딩 실패({ext}): {e}") from e
+
+    # WAV(PCM) 사양으로 맞춰주기
     audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
-    # WAV 바이트로 내보내기
-    out_io = io.BytesIO()
-    audio.export(out_io, format="wav")
-    return out_io.getvalue()
+
+    # 메모리로 WAV 내보내기
+    out = io.BytesIO()
+    audio.export(out, format="wav")
+    wav_bytes = out.getvalue()
+
+    os.unlink(fin_path)
+    return wav_bytes
+
+    # 3) 원하는 파라메터로 변환 (16kHz, mono, 16-bit)
+    audio = audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+
+    # 4) 메모리로 WAV 내보내기
+    out = io.BytesIO()
+    audio.export(out, format="wav")
+    wav_bytes = out.getvalue()
+
+    # 5) 임시 입력 파일 삭제
+    os.unlink(fin_path)
+    return wav_bytes
