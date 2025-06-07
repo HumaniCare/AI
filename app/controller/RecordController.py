@@ -9,9 +9,9 @@ from fastapi import APIRouter, Request, UploadFile, File, Form
 
 from app.dto.ScheduleSpeakRequestDto import ScheduleSpeakRequestDto
 from app.dto.ScheduleTTSRequestDto import ScheduleTTSRequestDto
-from app.service.elevenLabs import text_to_speech_file_save_AWS, text_to_speech_file
+from app.service.elevenLabs import add_voice, text_to_speech_file_save_AWS, text_to_speech_file
 from app.service.gpt import ChatgptAPI
-from app.service.s3Service import download_from_s3, save_local_file
+from app.service.s3Service import upload_to_s3, download_from_s3, save_local_file
 from app.utils import play_file
 
 router = APIRouter(
@@ -50,12 +50,12 @@ async def save_local_files(files: List[UploadFile]) -> list:
 @router.post("/voices")
 async def getVoice(request: Request, file: UploadFile = File(...)):
     token = request.headers.get("Authorization").split(" ")[1]
-    # local_file_path = await save_local_file(file)
-    # voice_id = add_voice(name=name, local_file_paths=[local_file_path])
-    # voice_url = s3Service.upload_to_s3(local_file_path)
-    # os.remove(local_file_path)
+    local_file_path = await save_local_file(file)
+    voice_id = add_voice(name=name, local_file_paths=[local_file_path])
+    voice_url = upload_to_s3(local_file_path)
+    os.remove(local_file_path)
 
-    send_user_voice_file_to_spring(token=token, voice_url=yjg_voice_id)
+    send_user_voice_file_to_spring(token=token, voice_url=voice_url) #yjg_voice_id
 
 #만약 voice_id와 요구하는 분야가 오면 맞춰서 return
 @router.post("/schedules")
@@ -63,18 +63,18 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
     voice_id = yjg_voice_id
 
-    #prompt = ChatgptAPI(schedules.schedule_text, "엄마")
+    prompt = ChatgptAPI(schedules.schedule_text, "엄마")
 
-    # schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
-    #schedule_dict = prompt.get_schedule_json()
+    schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
+    schedule_dict = prompt.get_schedule_json()
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        # schedules.schedule_id[i]: text_to_speech_file_save_AWS(
-        #     schedule_dict.get(schedules.schedule_text[i], ""),
-        #     yjg_voice_id
-        # )
-        schedules.schedule_id[i]: str(schedules.schedule_id[i])
+        schedules.schedule_id[i]: text_to_speech_file_save_AWS(
+            schedule_dict.get(schedules.schedule_text[i], ""),
+            yjg_voice_id
+        )
+        # schedules.schedule_id[i]: str(schedules.schedule_id[i])
         for i in range(len(schedules.schedule_id))
     }
     return response
