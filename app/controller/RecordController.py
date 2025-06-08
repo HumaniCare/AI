@@ -51,7 +51,7 @@ async def save_local_files(files: List[UploadFile]) -> list:
 async def getVoice(request: Request, file: UploadFile = File(...)):
     token = request.headers.get("Authorization").split(" ")[1]
     local_file_path = await save_local_file(file)
-    voice_id = add_voice(name=name, local_file_paths=[local_file_path])
+    voice_id = add_voice(name="박석진", local_file_paths=[local_file_path])
     voice_url = upload_to_s3(local_file_path)
     os.remove(local_file_path)
 
