@@ -55,7 +55,7 @@ async def getVoice(request: Request, file: UploadFile = File(...)):
     voice_url = upload_to_s3(local_file_path)
     os.remove(local_file_path)
 
-    send_user_voice_file_to_spring(token=token, voice_url=voice_url) #yjg_voice_id
+    send_user_voice_file_to_spring(token=token, voice_url=voice_id) #yjg_voice_id
 
 #만약 voice_id와 요구하는 분야가 오면 맞춰서 return
 @router.post("/schedules")
