@@ -7,7 +7,7 @@ import numpy as np
 import requests
 from boto3 import client
 from fastapi import APIRouter, Request, UploadFile, File, Form
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 
 from app.ML.audio_extractor_utils import get_features
 from app.ML.loss import boundary_enhanced_focal_loss

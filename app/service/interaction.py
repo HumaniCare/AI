@@ -95,4 +95,4 @@ def interaction(alias: str):
 if __name__ == "__main__":
     # 스크립트를 직접 실행할 때만 동작
     # alias를 원하는 이름으로 바꿔주세요
-    interaction("홍길동")
+    interaction("아빠")
