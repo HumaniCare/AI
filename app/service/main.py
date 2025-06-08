@@ -20,7 +20,7 @@ from app.controller.RecordController import router
 #         print("Redis task cancelled")
 
 
-app = FastAPI(lifespan = lifespan)
+app = FastAPI()
 
 auth_scheme = HTTPBearer()
 
