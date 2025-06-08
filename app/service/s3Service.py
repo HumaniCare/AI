@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+from datetime import datetime
 from typing import List
 
 import requests
@@ -47,6 +48,34 @@ def upload_to_s3(local_file_path: str) -> str:
         timestamp = int(time.time())
         unique_id = str(uuid.uuid4())
         s3_file_name = f"record/audio_{timestamp}_{unique_id}.wav"
+
+        # S3에 파일 업로드
+        with open(local_file_path, "rb") as data:
+            s3_client.upload_fileobj(data, bucket_name, s3_file_name)
+
+        # S3 URL 생성
+        aws_file_url = f"{url_base}/{s3_file_name}"
+        return aws_file_url
+
+    except ClientError as e:
+        print(f'Credential error => {e}')
+    except Exception as e:
+        print(f"Another error => {e}")
+
+
+def upload_to_s3_png(local_file_path: str) -> str:
+    """로컬 파일을 S3에 업로드하고 S3 URL을 반환합니다."""
+    try:
+        if not os.path.isfile(local_file_path):
+            print(f"Local file does not exist: {local_file_path}")
+            return None
+
+        date_str = datetime.now().strftime("%Y%m%d")
+        filename = f"{date_str}"
+
+        timestamp = int(time.time())
+        unique_id = str(uuid.uuid4())
+        s3_file_name = f"image/{filename}_{timestamp}_{unique_id}.png"
 
         # S3에 파일 업로드
         with open(local_file_path, "rb") as data:

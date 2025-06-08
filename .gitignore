@@ -34,9 +34,10 @@ venv.bak/
 *.idea
 .DS_Store
 
-*.h5
+
 __pycache__/
 *.pyc
 audio/
-emotion_diary/
+#emotion_diary/
+emotion_png/
 pyvenv.cfg

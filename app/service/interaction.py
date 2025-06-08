@@ -2,43 +2,30 @@ import os
 import subprocess
 from datetime import datetime
 
-import pyaudio
-import numpy as np
 from faster_whisper import WhisperModel
 from openai import OpenAI
-from elevenLabs import text_to_speech_file
 from elevenlabs import ElevenLabs
 from dotenv import load_dotenv
 
-# 아래 두 함수는 record_respberry.py 에 구현된 그대로 사용합니다.
-# emotion_record(index) → "{prefix}{index}.wav" 파일을 만들어 리턴
-# is_silent(data) → 음성 청크가 침묵인지 여부 판단
-from record_respberry import emotion_record, is_silent
+from app.service.elevenLabs import text_to_speech_file
+# 녹음 함수 (arecord 사용) - 수정된 record_respberry.py 참고
+from record_respberry import emotion_record
 
 # ==== 공통 설정 ====
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ELEVENLABS_KEY   = os.getenv("ELEVENLABS_KEY")
+ELEVENLABS_KEY = os.getenv("ELEVENLABS_KEY")
 
 if not OPENAI_API_KEY or not ELEVENLABS_KEY:
     raise RuntimeError(".env 에 OPENAI_API_KEY/ELEVENLABS_KEY 를 설정하세요")
 
 # OpenAI / ElevenLabs 클라이언트
-gpt_client   = OpenAI(api_key=OPENAI_API_KEY)
-tts_client   = ElevenLabs(api_key=ELEVENLABS_KEY)
+gpt_client = OpenAI(api_key=OPENAI_API_KEY)
+tts_client = ElevenLabs(api_key=ELEVENLABS_KEY)
 
 # Whisper 모델 (tiny, CPU, int8)
 whisper_model = WhisperModel("tiny", device="cpu", compute_type="int8")
 
-# 녹음 파라미터 (ALSA default=USBMIC 으로 잡힌 상태)
-FORMAT   = pyaudio.paInt16
-CHANNELS = 1
-RATE     = 44100
-CHUNK    = RATE * 3    # 3초 단위 버퍼
-
-# 오늘 날짜 기반 녹음 파일 저장 경로 prefix
-today_str           = datetime.now().strftime("%Y%m%d")
-WAVE_OUTPUT_PREFIX  = f"/home/team4/Desktop/capstone/AI/app/emotion_diary/{today_str}_"
 
 def interaction(alias: str):
     """
@@ -104,8 +91,8 @@ def interaction(alias: str):
 
     print("=== interaction 종료 ===")
 
+
 if __name__ == "__main__":
     # 스크립트를 직접 실행할 때만 동작
     # alias를 원하는 이름으로 바꿔주세요
     interaction("홍길동")
-

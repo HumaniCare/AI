@@ -51,6 +51,7 @@ class ChatgptAPI:
 
         return schedule_dict
 
+
 class GenerateQuestionGPT:
     def __init__(self, text, alias):
         self.text = text
@@ -93,3 +94,46 @@ class GenerateQuestionGPT:
         schedule_dict = parsing_json.extract_json_from_content(content)
 
         return schedule_dict
+
+
+class EmotionReportGPT:
+    def __init__(self, text, percent_list):
+        self.text = text
+        self.percent_list = percent_list
+
+    def create_report_prompt(self):
+        system_message = f"""
+            너는 지금부터 감정을 분석 하는 심리 상담사야. 
+
+            네 역할은 텍스트와 수치를 보고, 해당 발화의 인물이 하루 동안 어떤 감정 상태를 가졌는지 체크해주는 거야.
+            텍스트는 다음과 같아: {str(self.text)}
+            수치는 다음과 같아 : {self.percent_list}
+
+            너의 목표는 두 가지야:
+            1. 텍스트와 수치를 보고 발화의 인물의 하루 감정을 종합적으로 분석해줘. 
+                1-a) 분석을 할 때는 텍스트나 문맥에서 근거를 들어서 논리적으로 서술해줘.
+                1-b) 분석 말투는 보호자에게 피보호자의 상태를 설명하는 존댓말 말투로 해줘. 
+                1-c) '발화자'를 지칭하는 말은 '피보호자'로 해줘 
+            2. 분석 문장은 4-5 줄이어야 해.
+
+            결과는 꼭 큰따옴표(")만 사용해서 str로 반환해줘. 만약 여러 문장이라면 "\n"를 문장 끝에 넣어줘.
+
+        """
+
+        messages = [
+            {"role": "system", "content": system_message}
+        ]
+        return messages
+
+    def get_report_text(self):
+        prompt = self.create_report_prompt()
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=prompt,
+            temperature=0.5,
+            max_tokens=2048
+        )
+
+        content = response.choices[0].message.content
+
+        return content
