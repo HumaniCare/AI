@@ -4,7 +4,7 @@ import uuid
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs, VoiceSettings
 
-from AI.app.service.s3Service import upload_to_s3
+from app.service.s3Service import upload_to_s3
 
 load_dotenv()
 client = ElevenLabs(
