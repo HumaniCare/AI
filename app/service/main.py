@@ -6,10 +6,12 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
 
+from app.controller.RecordController import router
+
 # from app.controller.RecordController import router
 
-from app.ML.ModelController import router
-from app.service.subscribe import subscribe_schedule
+
+# from app.service.subscribe import subscribe_schedule
 
 # @asynccontextmanager
 # async def lifespan(app: FastAPI):
@@ -88,9 +90,3 @@ app.add_middleware(
 
 app.include_router(router)
 
-# before_script, statistics_filler_json, statistics_silence_json = startSTT(
-#     "https://peachmentor-bucket.s3.ap-northeast-2.amazonaws.com/record/%E1%84%82%E1%85%A9%E1%86%A8%E1%84%8B%E1%85%B3%E1%86%B7.m4a")
-# self_feedback = "그래도 주어진 시간동안 말을 이어나가긴 했는데 말을 자연스럽게 연결하지 못한 것 같아"
-# feedbackAss = FeedbackAssistant(before_script, statistics_filler_json, statistics_silence_json)
-# feedback = feedbackAss.get_feedback()
-# print(feedback)

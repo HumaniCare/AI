@@ -3,16 +3,25 @@ import os
 import subprocess
 from typing import List
 
+import numpy as np
 import requests
 from boto3 import client
 from fastapi import APIRouter, Request, UploadFile, File, Form
+from sentence_transformers import SentenceTransformer
 
+from app.ML.audio_extractor_utils import get_features
+from app.ML.loss import boundary_enhanced_focal_loss
+from app.ML.plot_utils import save_plot, get_s3_png_url
+from app.ML.speech_to_text import speech_to_text
 from app.dto.ScheduleSpeakRequestDto import ScheduleSpeakRequestDto
 from app.dto.ScheduleTTSRequestDto import ScheduleTTSRequestDto
 from app.service.elevenLabs import text_to_speech_file_save_AWS, text_to_speech_file
-from app.service.gpt import ChatgptAPI
+from app.service.gpt import ChatgptAPI, EmotionReportGPT
 from app.service.s3Service import download_from_s3, save_local_file
 from app.utils import play_file
+from tensorflow.keras.models import load_model
+
+from app.utils.convertFileExtension import convert_to_wav
 
 router = APIRouter(
     prefix="/api/fastapi",
@@ -30,6 +39,17 @@ s3_client = client(
     aws_secret_access_key=secret_key,
     region_name="ap-northeast-2",
 )
+
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
+# app = FastAPI()
+
+BASE_DIR_win = os.getcwd() + "/app/emotion_diary"
+model_path_win = os.getcwd() + "/app/ML/ko-sbert_multimodal_0501_3_resnet_augment_h.h5"
+emotion_labels = ['angry', 'sadness', 'happiness', 'fear', 'disgust', 'surprise', 'neutral']
+
+embedding_model = SentenceTransformer('jhgan/ko-sbert-multitask')
+model = load_model(model_path_win, custom_objects={'boundary_enhanced_focal_loss': boundary_enhanced_focal_loss})
 
 
 async def save_local_files(files: List[UploadFile]) -> list:
@@ -57,68 +77,97 @@ async def getVoice(request: Request, file: UploadFile = File(...)):
 
     send_user_voice_file_to_spring(token=token, voice_url=yjg_voice_id)
 
-#만약 voice_id와 요구하는 분야가 오면 맞춰서 return
+
+# 만약 voice_id와 요구하는 분야가 오면 맞춰서 return
 @router.post("/schedules")
 async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
     voice_id = yjg_voice_id
 
-    #prompt = ChatgptAPI(schedules.schedule_text, "엄마")
+    prompt = ChatgptAPI(schedules.schedule_text, schedules.alias)
 
     # schedule_dict: {"저녁": "엄마~ 저녁 잘 챙겨 먹었어?", "운동": "오늘 운동했어? 건강 챙겨~!"}
-    #schedule_dict = prompt.get_schedule_json()
+    schedule_dict = prompt.get_schedule_json()
 
     # TTS 처리 (MP3 파일 생성 후 s3 저장)
     response = {
-        # schedules.schedule_id[i]: text_to_speech_file_save_AWS(
-        #     schedule_dict.get(schedules.schedule_text[i], ""),
-        #     yjg_voice_id
-        # )
-        schedules.schedule_id[i]: str(schedules.schedule_id[i])
+        schedules.schedule_id[i]: text_to_speech_file_save_AWS(
+            schedule_dict.get(schedules.schedule_text[i], ""),
+            yjg_voice_id
+        )
+        # schedules.schedule_id[i]: str(schedules.schedule_id[i])
         for i in range(len(schedules.schedule_id))
     }
     return response
 
 
-# @router.post("/basic-tts")
-# async def speak_schedule_tts(request: Request, basicTTSRequestDto: BasicTTSRequestDto):
-#     # token = request.headers.get("Authorization").split(" ")[1]
-#     local_file_path = download_from_s3(basicTTSRequestDto.schedule_voice_Url)
-#     print(f"Downloaded file path: {local_file_path}")
-#
-#     # 블루투스 헤드셋 또는 기본 스피커로 출력
-#     os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
-#     os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
-#
-#     # 로컬 파일을 직접 재생
-#     subprocess.run(["mpg321", local_file_path])
-#
-#     return {"message": "TTS completed and played on Bluetooth headset or speaker"}
+@router.post("/predict")
+async def predict(request: Request, files: List[UploadFile] = File(...)):
+    # token = request.headers.get("Authorization").split(" ")[1]
+    print(files)
+    # 1) 임시 파일 저장 or 메모리 내 처리
+    wav_data_list = []
+    for file in files:
+        raw = await file.read()
+        ext = file.filename.split('.')[-1]  # 'm4a', 'mp3' 등
+        wav_bytes = convert_to_wav(raw, ext)  # BytesIO 변환
+        wav_data_list.append(wav_bytes)
 
+    # 2) 오디오 특징 추출
+    all_feats = []
+    for wav_bytes in wav_data_list:
+        # get_features 함수가 경로 입력이면, 아래처럼 메모리 파일 처리 필요
+        # 임시파일로 저장 후 경로 전달 or get_features 수정 필요
 
-# @router.post("/extra-tts")
-# async def speak_schedule_tts(request: Rlocalhostquest, extraTTSRequestDto: ExtraTTSRequestDto):
-#     # token = request.headers.get("Authorization").split(" ")[1]
-#     schedule_text = extraTTSRequestDto.schedule_text
-#
-#     #진짜 실제로 쓸 코드
-#     local_file_path = text_to_speech_file(schedule_text, yjg_voice_id)
-#
-#     # 테스트하면서 AWS에 올려놓으려고 남긴 코드
-#     url = text_to_speech_file_save_AWS(schedule_text, yjg_voice_id)
-#     local_file_path = download_from_s3(url)
-#
-#     # local_file_path = os.getcwd()+"/test_audio/test8.mp3" # test
-#     # 블루투스 헤드셋 또는 기본 스피커로 출력
-#     os.system("pactl list sinks | grep 'bluez_sink'")  # 블루투스 출력 장치 확인
-#     os.system("pactl set-default-sink `pactl list sinks short | grep bluez_sink | awk '{print $2}'`")  # 기본 출력 변경
-#
-#     # 로컬 파일을 직접 재생
-#     subprocess.run(["/usr/bin/mpg321", local_file_path])
-#     # subprocess.run(["ffplay", "-nodisp", "-autoexit", local_file_path],
-#     #                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) # 윈도우용
-#     return {"message": "TTS completed and played on Bluetooth headset or speaker"}
-#
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, "wb") as f:
+            f.write(wav_bytes)
+        feats = get_features(temp_path)
+        os.remove(temp_path)
+        all_feats.append(feats)
+
+    all_feats = np.stack(all_feats, axis=0)
+    pooled_feats = all_feats.mean(axis=0)
+    audio_input = pooled_feats[np.newaxis, :, np.newaxis]
+
+    # 3) STT & 텍스트 임베딩
+    texts = []
+    for wav_bytes in wav_data_list:
+        temp_path = f"temp_stt.wav"
+        with open(temp_path, "wb") as f:
+            f.write(wav_bytes)
+        text = speech_to_text(temp_path)
+        os.remove(temp_path)
+        texts.append(text)
+
+    full_text = " . ".join(texts)
+    text_vec = embedding_model.encode([full_text])[0]
+    text_input = text_vec[np.newaxis, :]
+
+    # 4) 예측
+    prediction = model.predict([audio_input, text_input])
+    pred_percent = (prediction[0] * 100).tolist()
+
+    # 5) JSON 응답
+    result = {label: round(p, 2) for label, p in zip(emotion_labels, pred_percent)}
+    top_idx = np.argmax(pred_percent)
+    result['predicted_emotion'] = emotion_labels[top_idx]
+
+    local_path = save_plot(pred_percent)
+    s3_path = get_s3_png_url(local_path)
+    reporter = EmotionReportGPT(full_text, pred_percent)
+    report_text = reporter.get_report_text()
+
+    print(s3_path)
+
+    # send_emotion_report_to_spring(s3_path, report_text)
+
+    data = {
+        "imageUrl": s3_path,
+        "report_text": report_text
+    }
+    return data
+
 
 def send_user_voice_file_to_spring(token: str, voice_url: str):
     headers = {
@@ -146,107 +195,17 @@ def send_user_voice_id_to_spring(token: str, voice_id: str):
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
 
-def send_user_speech_file_to_spring(token: str, before_audio_link: str, answerId: int):
+def send_emotion_report_to_spring(image_url: str, analysis_text):
     headers = {
-        "Authorization": f"Bearer {token}"
+        # "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
     }
     data = {
-        "beforeAudioLink": before_audio_link,
-        "answerId": answerId
+        "imageUrl": image_url,
+        "report_text": analysis_text
     }
-    requests.post("http://springboot:8080/api/spring/records/speeches", headers=headers, json=data)
-    # requests.post("https://peachmentor.com/api/spring/records/speeches", headers=headers, json=data)
-
-
-def receive_self_feedback(token: str) -> str:
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-    response = requests.get("http://springboot:8080/api/spring/self-feedbacks/latest-feedbacks", headers=headers)
-    # response = requests.get("https://peachmentor.com/api/spring/self-feedbacks/latest-feedbacks", headers=headers)
-
-    feedback_data = response.json().get('result', {})
-    self_feedback = feedback_data.get('feedback')
-
-    if self_feedback is None:
-        return "없음"
-    return self_feedback
-
-
-def send_statistics_to_spring(token: str, gantourCount: int, silentTime: float, answerId: int):
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
-    data = {
-        "gantourCount": gantourCount,
-        "silentTime": silentTime,
-        "answerId": answerId
-    }
-    requests.post("http://springboot:8080/api/spring/statistics", headers=headers, json=data)
-    # requests.post("https://peachmentor.com/api/spring/statistics", headers=headers, json=data)
-
-# # 질문 답변에 대한 insight 제공 api
-# @router.post("/insights")
-# async def getRecord(request: Request, answerId: int = Form(...), question: str = Form(...),
-#                     file: UploadFile = File(...)):
-#     token = request.headers.get("Authorization").split(" ")[1]
-#
-#     local_file_path = await s3Service.save_local_file(file)
-#     before_audio_link = s3Service.upload_to_s3(local_file_path)
-#
-#     send_user_speech_file_to_spring(token=token, before_audio_link=before_audio_link, answerId=answerId)
-#
-#     insightGpt = InsightAssistant(question)
-#     insight = insightGpt.get_insight()
-#
-#     os.remove(local_file_path)
-#     return {"insight": insight}
-
-
-# 피드백 후 데이터 전송 api
-# @router.post("/feedbacks")
-# async def getFeedback(request: Request, feedbackRequestDto: FeedbackRequestDto):
-#     token = request.headers.get("Authorization").split(" ")[1]  # todo: 토큰 에러처리 좀 (밑에도)
-#
-#     filtered_past_audio_links = [link for link in feedbackRequestDto.pastAudioLinks if
-#                                  link != feedbackRequestDto.beforeAudioLink]
-#     links = [feedbackRequestDto.beforeAudioLink, feedbackRequestDto.voiceUrl] + filtered_past_audio_links
-#     file_paths = download_from_s3_links(links)
-#
-#     voice_id = add_voice(name=feedbackRequestDto.name, local_file_paths=file_paths)
-#
-#     transcribe_token = speechToTextWithApi.get_token()
-#     t_id = speechToTextWithApi.get_transcribe_id(transcribe_token, beforeAudioLink=feedbackRequestDto.beforeAudioLink)
-#
-#     time.sleep(0.5)  # 첫 요청시 바로 하면 404 뜰수도 있다고 함
-#     first_script, silence_time = speechToTextWithApi.start_stt(transcribe_token, t_id)
-#
-#     before_script_gpt = FeedbackAssistantUseBeforeScript(first_script)
-#     before_script = before_script_gpt.get_feedback()
-#
-#     filler_count = speechToTextWithApi.get_filler_count(before_script[0])
-#
-#     feedbackGpt = FeedbackAssistant(first_script, filler_count, silence_time)
-#     feedback = feedbackGpt.get_feedback()
-#
-#     after_audio_link = text_to_speech_file(text=feedback[0], voice_id=voice_id)
-#
-#     send_statistics_to_spring(token=token, gantourCount=filler_count, silentTime=silence_time,
-#                               answerId=feedbackRequestDto.answerId)
-#
-#     for file_path in file_paths:
-#         os.remove(file_path)
-#
-#     return {"beforeScript": before_script[0],
-#             "afterScript": feedback[0],
-#             "afterAudioLink": after_audio_link,
-#             "feedbackText": "\n".join(feedback[1:])}
-
-
-# @router.post("/analyses")
-# def getUserSpeechHabit(request: Request, analysisRequestDto: AnalysisRequestDto):
-#     token = request.headers.get("Authorization").split(" ")[1]
-#     analysis_gpt = AnalysisAssistant(questions=analysisRequestDto.questions, beforeScripts=analysisRequestDto.beforeScripts)
-#     analysis = analysis_gpt.get_analysis()
-#
-#     return {"analysisText": analysis}  # 데이터를 JSON 객체로 감쌈
+    requests.post(
+        "http://springboot:8080/api/spring/report",
+        headers=headers,
+        json=data
+    )
