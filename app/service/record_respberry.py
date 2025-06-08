@@ -22,11 +22,10 @@ def _ensure_dir():
 
 
 def is_silent(data: np.ndarray, threshold: float = THRESHOLD) -> bool:
-    """
-    float32 numpy 배열을 받아 RMS 기준으로 침묵 여부를 판단
-    """
     rms = np.sqrt(np.mean(data ** 2))
+    print(f"RMS: {rms:.5f} (threshold: {threshold})")  # 디버깅 출력
     return rms < threshold
+
 
 
 def emotion_record(index: int) -> str:
