@@ -12,8 +12,6 @@ from fastapi import UploadFile
 
 from app.utils.convertFileExtension import convert_to_mp3
 
-# from AI.app.utils.convertFileExtension import convert_to_mp3
-
 load_dotenv()
 
 access_key = os.getenv("S3_ACCESSKEY")

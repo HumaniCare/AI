@@ -11,18 +11,18 @@ from contextlib import asynccontextmanager
 from app.ML.ModelController import router
 from app.service.subscribe import subscribe_schedule
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    task = asyncio.create_task(subscribe_schedule())
-    yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        print("Redis task cancelled")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     task = asyncio.create_task(subscribe_schedule())
+#     yield
+#     task.cancel()
+#     try:
+#         await task
+#     except asyncio.CancelledError:
+#         print("Redis task cancelled")
 
 
-app = FastAPI(lifespan = lifespan)
+app = FastAPI()
 
 auth_scheme = HTTPBearer()
 
