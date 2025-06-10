@@ -103,7 +103,6 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
 
 @router.post("/predict")
 async def predict(request: Request, files: List[UploadFile] = File(...)):
-    token = request.headers.get("Authorization").split(" ")[1]
     # print(files)
     # 1) 임시 파일 저장 or 메모리 내 처리
     wav_data_list = []
@@ -195,9 +194,8 @@ def send_user_voice_id_to_spring(token: str, voice_id: str):
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
 
-def send_emotion_report_to_spring(token: str, image_url: str, analysis_text):
+def send_emotion_report_to_spring(image_url: str, analysis_text):
     headers = {
-        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     data = {
