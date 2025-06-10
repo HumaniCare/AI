@@ -10,8 +10,8 @@ CHANNELS = 1
 RATE = 44100
 CHUNK_DURATION = 0.1  # 초 단위, 약 100ms
 CHUNK = int(RATE * CHUNK_DURATION)
-SILENCE_LIMIT = 5  # 5초 연속 침묵이면 녹음 종료
-THRESHOLD = 1000.0  # 침묵 판별 기준 (RMS)
+SILENCE_LIMIT = 3  # 5초 연속 침묵이면 녹음 종료
+THRESHOLD = 0.0003  # 침묵 판별 기준 (RMS)
 
 BASE_DIR = "/home/team4/Desktop/capstone/AI/app/emotion_diary"
 

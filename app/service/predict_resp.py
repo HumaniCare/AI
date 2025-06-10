@@ -32,5 +32,5 @@ def predict():
         print(f"Error: {response.status_code} - {response.text}")
 
 
-if __name__ == "__main__":
-    predict()
+# if __name__ == "__main__":
+#     predict()

@@ -8,6 +8,7 @@ from elevenlabs import ElevenLabs
 from dotenv import load_dotenv
 
 from app.service.elevenLabs import text_to_speech_file
+from app.service.predict_resp import predict
 # 녹음 함수 (arecord 사용) - 수정된 record_respberry.py 참고
 from record_respberry import emotion_record
 
@@ -104,8 +105,9 @@ def interaction(alias: str):
 
     print("=== interaction 종료 ===")
 
+    predict() # fastapi로 predict api 콜 실행
 
-if __name__ == "__main__":
-    # 스크립트를 직접 실행할 때만 동작
-    # alias를 원하는 이름으로 바꿔주세요
-    interaction("아빠")
+#
+# if __name__ == "__main__":
+#     # 스크립트를 직접 실행할 때만 동작
+#     interaction("아빠")
