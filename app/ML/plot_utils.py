@@ -7,6 +7,7 @@ from app.service.s3Service import upload_to_s3_png
 
 colors = ['#e74c3c', '#3498db', '#f1c40f', '#e67e22', '#9b59b6', '#1abc9c', '#95a5a6']
 emotion_labels = ['angry', 'sadness', 'happiness', 'fear', 'disgust', 'surprise', 'neutral']
+BASE_DIR = "/home/team4/Desktop/capstone/AI/app/emotion_png"
 
 
 def save_plot(predictions_percent):
@@ -28,7 +29,9 @@ def save_plot(predictions_percent):
 
     date_str = datetime.now().strftime("%Y%m%d")
     filename = f"{date_str}"
-    local_path = os.getcwd() + f"/app/emotion_png/{filename}_emotion_distribution.png"
+    if not os.path.exists(BASE_DIR):
+        os.makedirs(BASE_DIR)
+    local_path = os.path.join(BASE_DIR, f"{filename}_emotion_distribution.png")
     # 이미지 파일로 저장
     plt.savefig(local_path, dpi=300, bbox_inches='tight')
     plt.show()
