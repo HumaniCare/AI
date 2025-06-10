@@ -195,9 +195,8 @@ def send_user_voice_id_to_spring(token: str, voice_id: str):
     # requests.post("https://peachmentor.com/api/spring/records/voices", headers=headers, json=data)
 
 
-def send_emotion_report_to_spring(token: str, image_url: str, analysis_text):
+def send_emotion_report_to_spring(image_url: str, analysis_text):
     headers = {
-        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     data = {
