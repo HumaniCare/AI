@@ -103,7 +103,6 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
 
 @router.post("/predict")
 async def predict(request: Request, files: List[UploadFile] = File(...)):
-    token = request.headers.get("Authorization").split(" ")[1]
     # print(files)
     # 1) 임시 파일 저장 or 메모리 내 처리
     wav_data_list = []
