@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 from typing import List
+import random
 
 import numpy as np
 import requests
@@ -15,7 +16,7 @@ from app.ML.plot_utils import save_plot, get_s3_png_url
 from app.ML.speech_to_text import speech_to_text
 from app.dto.ScheduleSpeakRequestDto import ScheduleSpeakRequestDto
 from app.dto.ScheduleTTSRequestDto import ScheduleTTSRequestDto
-from app.service.elevenLabs import text_to_speech_file_save_AWS, text_to_speech_file
+from app.service.elevenLabs import text_to_speech_file_save_AWS, text_to_speech_file, add_voice
 from app.service.gpt import ChatgptAPI, EmotionReportGPT
 from app.service.s3Service import download_from_s3, save_local_file
 from app.utils import play_file
@@ -70,19 +71,21 @@ async def save_local_files(files: List[UploadFile]) -> list:
 @router.post("/voices")
 async def getVoice(request: Request, file: UploadFile = File(...)):
     token = request.headers.get("Authorization").split(" ")[1]
-    # local_file_path = await save_local_file(file)
-    # voice_id = add_voice(name=name, local_file_paths=[local_file_path])
+    local_file_path = await save_local_file(file)
+    name = str(random.random())
+
+    voice_id = add_voice(name=name, local_file_paths=[local_file_path])
     # voice_url = s3Service.upload_to_s3(local_file_path)
     # os.remove(local_file_path)
 
-    send_user_voice_file_to_spring(token=token, voice_url=yjg_voice_id)
+    send_user_voice_file_to_spring(token=token, voice_id=voice_id)
 
 
 # 만약 voice_id와 요구하는 분야가 오면 맞춰서 return
 @router.post("/schedules")
 async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     # token = request.headers.get("Authorization").split(" ")[1]
-    voice_id = yjg_voice_id
+    voice_id = schedules.voice_id
 
     prompt = ChatgptAPI(schedules.schedule_text, schedules.alias)
 
@@ -93,7 +96,7 @@ async def schedule_tts(request: Request, schedules: ScheduleTTSRequestDto):
     response = {
         schedules.schedule_id[i]: text_to_speech_file_save_AWS(
             schedule_dict.get(schedules.schedule_text[i], ""),
-            yjg_voice_id
+            voice_id
         )
         # schedules.schedule_id[i]: str(schedules.schedule_id[i])
         for i in range(len(schedules.schedule_id))
@@ -169,7 +172,7 @@ async def predict(request: Request, files: List[UploadFile] = File(...)):
     return data
 
 
-def send_user_voice_file_to_spring(token: str, voice_url: str):
+def send_user_voice_file_to_spring(token: str, voice_id: str):
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "text/plain"
@@ -180,7 +183,7 @@ def send_user_voice_file_to_spring(token: str, voice_url: str):
     requests.post(
         "http://springboot:8080/api/spring/records/voices",
         headers=headers,
-        data=voice_url  # 주의: 'data='를 써야 함
+        data=voice_id  # 주의: 'data='를 써야 함
     )
 
 
